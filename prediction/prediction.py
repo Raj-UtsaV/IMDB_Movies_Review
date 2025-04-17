@@ -4,6 +4,8 @@ import tensorflow as tf
 from tensorflow.keras.datasets import imdb
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.models import load_model
+import re
+from bs4 import BeautifulSoup
 from pathlib import Path
 import os
 
@@ -22,6 +24,27 @@ if not os.path.exists(path):
     raise FileNotFoundError(f"Model file not found at {path}")
 model = load_model(path)
 
+
+
+def clean_text(text):
+    # Remove HTML tags
+    text = BeautifulSoup(text, "html.parser").get_text()
+    
+    # Remove square brackets and content within
+    text = re.sub('\[[^]]*\]', '', text)
+    
+    # Remove special characters and digits
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    
+    # Convert to lowercase
+    text = text.lower()
+    
+    # Remove extra whitespace
+    text = ' '.join(text.split())
+    
+    return text
+
+
 # Function to preprocess user input
 def preprocess_text(text):
     words = text.lower().split()
@@ -31,10 +54,11 @@ def preprocess_text(text):
 
 ### Prediction  function
 def predict_sentiment(review):
-    preprocessed_input=preprocess_text(review)
+    review = clean_text(review.lower())
+    preprocessed_input = preprocess_text(review)
 
-    prediction=model.predict(preprocessed_input)
+    prediction = model.predict(preprocessed_input)
 
     sentiment = 'Positive' if prediction[0][0] > 0.5 else 'Negative'
     
-    return sentiment, prediction[0][0]
+    return sentiment, prediction[0][0], 
